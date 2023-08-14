@@ -8,7 +8,7 @@ class BktGeneraStatics(bt.Analyzer):
     )
 
     def start(self):
-        self._returns = TimeReturn(**dtfcomp)
+        self._returns = bt.analyzers.TimeReturn(**dtfcomp)
 
     def stop(self):
         super(BktGeneraStatics, self).stop()
