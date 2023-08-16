@@ -6,9 +6,10 @@ class BktGeneraStatics(bt.Analyzer):
         ('timeframe', bt.TimeFrame.Days),
         ('compression', 1)
     )
-
-    def start(self):
-        self._returns = bt.analyzers.TimeReturn(**dtfcomp)
+    def __init__(self):
+        tr_param = dict(timeframe=self.p.timeframe,
+                        compression=self.p.compression)
+        self._returns = bt.analyzers.TimeReturn(**tr_param)
 
     def stop(self):
         super(BktGeneraStatics, self).stop()
