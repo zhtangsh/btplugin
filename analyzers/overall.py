@@ -1,4 +1,6 @@
 import backtrader as bt
+import pandas as pd
+import numpy as np
 
 
 class BktGeneraStatics(bt.Analyzer):
@@ -6,6 +8,7 @@ class BktGeneraStatics(bt.Analyzer):
         ('timeframe', bt.TimeFrame.Days),
         ('compression', 1)
     )
+
     def __init__(self):
         tr_param = dict(timeframe=self.p.timeframe,
                         compression=self.p.compression)
@@ -18,12 +21,11 @@ class BktGeneraStatics(bt.Analyzer):
     def result(self):
         # Returns
         cols = ['index', 'return']
-        returns = DF.from_records(iteritems(self.rets['returns']),
-                                  index=cols[0], columns=cols)
-        returns.index = pandas.to_datetime(returns.index)
+        returns = pd.DataFrame.from_records(iter(self.rets['returns'].items()), index=cols[0], columns=cols)
+        returns.index = pd.to_datetime(returns.index)
         rets = returns['return']
         # _npv
-        _npv = (1 + _returns).cumprod()
+        _npv = (1 + rets).cumprod()
         df_analysis = self.get_netvalue_analysis(_npv, freq='d', rf=0.)
         return df_analysis
 
@@ -87,7 +89,7 @@ class BktGeneraStatics(bt.Analyzer):
             # 夏普比率
             sharpe = (return_yr - rf) / volatility_yr
             # 回撤
-            drawdowns = RetAnalysis.get_maxdrawdown(netvalue)
+            drawdowns = self.get_maxdrawdown(netvalue)
             # 最大回撤
             maxdrawdown = min(drawdowns)
             # 收益风险比
@@ -114,3 +116,17 @@ class BktGeneraStatics(bt.Analyzer):
             '夏普比率': sharpe,
             'Calmar比': profit_risk_ratio,
         }, name='analysis')
+
+    def get_maxdrawdown(netvalue):
+        '''
+        最大回撤率计算
+        '''
+        maxdrawdowns = pd.Series(index=netvalue.index, dtype='float64')
+        for i in np.arange(len(netvalue.index)):
+            highpoint = netvalue.iloc[0:(i + 1)].max()
+            if highpoint == netvalue.iloc[i]:
+                maxdrawdowns.iloc[i] = 0
+            else:
+                maxdrawdowns.iloc[i] = netvalue.iloc[i] / highpoint - 1
+
+        return maxdrawdowns
