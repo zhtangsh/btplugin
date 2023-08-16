@@ -117,7 +117,7 @@ class BktGeneraStatics(bt.Analyzer):
             'Calmar比': profit_risk_ratio,
         }, name='analysis')
 
-    def get_maxdrawdown(netvalue):
+    def get_maxdrawdown(self, netvalue):
         '''
         最大回撤率计算
         '''
