@@ -10,7 +10,15 @@ FREQ_ONEYEAR_MAP = {
     'HD': 2,
     'Y': 1
 }
-
+DAYS_IN_PERIOD = {
+    'D': 1,
+    '1D': 1,
+    "W": 5,
+    '1W': 5,
+    'M': 21,
+    'HD': 126,
+    'Y': 252
+}
 
 def get_netvalue_analysis(netvalue, freq, rf) -> pd.Series:
     """
@@ -122,6 +130,8 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     4. 计算该频率上的换手率, total_value/position_value*factor
     返回所有换手率的平均值
     """
+    if freq not in DAYS_IN_PERIOD:
+        raise ValueError('average_turnover -- Not Right freq : ', freq)
     if freq == 'Y':
         grouper_key = 'Y'
     elif freq == 'M':
@@ -145,8 +155,8 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     merged_df = position_info.join(transaction_info)
     merged_df = merged_df[~merged_df['position_value'].isna()].copy()
     merged_df['factor'] = 1
-    if freq == 'Y':
-        # 年化处理
-        merged_df['factor'] = 252.0 / merged_df['total_days']
+    # if freq == 'Y':
+    #     # 年化处理
+    #     merged_df['factor'] = 252.0 / merged_df['total_days']
     merged_df['turnover_rate'] = merged_df['total_value'] / merged_df['position_value'] * merged_df['factor']
-    return merged_df['turnover_rate'].mean()
+    return merged_df['turnover_rate'].mean()/DAYS_IN_PERIOD[freq]*252

@@ -7,7 +7,10 @@ class BktGeneraStatics(bt.Analyzer):
     params = (
         ('timeframe', bt.TimeFrame.Days),
         ('compression', 1),
-        ('turnover_freq', 'Y'),
+        # ('turnover_freq', 'Y'),
+        ('strategy_freq', 'W'), # 策略信号频率，用于进行交易结果分析
+        ('npv_freq', 'D'), # 对应日度价格数据
+        ('rf', 0.),
     )
 
     def __init__(self):
@@ -36,7 +39,7 @@ class BktGeneraStatics(bt.Analyzer):
         # Transaction value
         t_df = bt_resulst_utils.build_transaction(self.rets['transactions'])
         # Turnover value
-        turnover = analysis_util.average_turnover(p_df, t_df, self.p.turnover_freq)
-        df_analysis = analysis_util.get_netvalue_analysis(_npv, freq='d', rf=0.)
+        turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
+        df_analysis = analysis_util.get_netvalue_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
         df_analysis['平均换手率'] = turnover
         return df_analysis
