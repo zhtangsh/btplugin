@@ -10,6 +10,14 @@ FREQ_ONEYEAR_MAP = {
     'HD': 2,
     'Y': 1
 }
+FREQ_GROUPER_MAP = {
+    'D': 'D',
+    '1D': 'D',
+    "W": 'W-FRI',
+    '1W': 'W-FRI',
+    'M': 'MS',
+    'Y': 'Y'
+}
 DAYS_IN_PERIOD = {
     'D': 1,
     '1D': 1,
@@ -130,16 +138,9 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     4. 计算该频率上的换手率, total_value/position_value*factor
     返回所有换手率的平均值
     """
-    if freq not in DAYS_IN_PERIOD:
+    if freq not in DAYS_IN_PERIOD or freq not in FREQ_GROUPER_MAP:
         raise ValueError('average_turnover -- Not Right freq : ', freq)
-    if freq == 'Y':
-        grouper_key = 'Y'
-    elif freq == 'M':
-        grouper_key = 'MS'
-    elif freq == 'W':
-        grouper_key = 'W-FRI'
-    else:
-        raise ValueError(f"Invalid tunover_freq:{freq}")
+    grouper_key = FREQ_GROUPER_MAP[freq]
     position_df['sum'] = position_df.sum(axis=1)-position_df['cash']
     transaction_df = transaction_df.reset_index()
     position_df = position_df.reset_index()
@@ -154,9 +155,5 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     )
     merged_df = position_info.join(transaction_info)
     merged_df = merged_df[~merged_df['position_value'].isna()].copy()
-    merged_df['factor'] = 1
-    # if freq == 'Y':
-    #     # 年化处理
-    #     merged_df['factor'] = 252.0 / merged_df['total_days']
-    merged_df['turnover_rate'] = merged_df['total_value'] / merged_df['position_value'] * merged_df['factor']
+    merged_df['turnover_rate'] = merged_df['total_value'] / merged_df['position_value']
     return merged_df['turnover_rate'].mean()/DAYS_IN_PERIOD[freq]*252

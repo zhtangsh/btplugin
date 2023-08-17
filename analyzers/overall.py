@@ -7,7 +7,6 @@ class BktGeneraStatics(bt.Analyzer):
     params = (
         ('timeframe', bt.TimeFrame.Days),
         ('compression', 1),
-        # ('turnover_freq', 'Y'),
         ('strategy_freq', 'W'), # 策略信号频率，用于进行交易结果分析
         ('npv_freq', 'D'), # 对应日度价格数据
         ('rf', 0.),
