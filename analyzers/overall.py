@@ -40,5 +40,5 @@ class BktGeneraStatics(bt.Analyzer):
         # Turnover value
         turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
         df_analysis = analysis_util.get_netvalue_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
-        df_analysis['平均换手率'] = turnover
+        df_analysis['年化换手率'] = turnover
         return df_analysis
