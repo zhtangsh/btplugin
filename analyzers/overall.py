@@ -7,8 +7,8 @@ class BktGeneraStatics(bt.Analyzer):
     params = (
         ('timeframe', bt.TimeFrame.Days),
         ('compression', 1),
-        ('strategy_freq', 'W'), # 策略信号频率，用于进行交易结果分析
-        ('npv_freq', 'D'), # 对应日度价格数据
+        ('strategy_freq', 'W'),  # 策略信号频率，用于进行交易结果分析
+        ('npv_freq', 'D'),  # 对应日度价格数据
         ('rf', 0.),
     )
 
@@ -26,6 +26,13 @@ class BktGeneraStatics(bt.Analyzer):
         self.rets['transactions'] = self._transactions.get_analysis()
 
     def result(self):
+        """
+        返回分析器的结果,包括三个Dateframe
+        1. 综合分析dataframe
+        2. 仓位表
+        3. 交易表
+        :return:
+        """
         # Returns
         cols = ['index', 'return']
         returns = pd.DataFrame.from_records(iter(self.rets['returns'].items()), index=cols[0], columns=cols)
@@ -41,4 +48,4 @@ class BktGeneraStatics(bt.Analyzer):
         turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
         df_analysis = analysis_util.get_netvalue_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
         df_analysis['年化换手率'] = turnover
-        return df_analysis
+        return df_analysis, p_df, t_df
