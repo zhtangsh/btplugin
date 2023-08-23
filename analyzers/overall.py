@@ -48,4 +48,5 @@ class BktGeneraStatics(bt.Analyzer):
         turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
         df_analysis = analysis_util.get_netvalue_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
         df_analysis['年化换手率'] = turnover
-        return df_analysis, p_df, t_df
+        npv_annual = analysis_util.get_yearly(_npv, '年化收益率', freq=self.p.npv_freq, rf=self.p.rf)
+        return df_analysis, p_df, t_df, npv_annual

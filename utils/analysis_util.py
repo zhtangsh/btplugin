@@ -28,6 +28,7 @@ DAYS_IN_PERIOD = {
     'Y': 252
 }
 
+
 def get_netvalue_analysis(netvalue, freq, rf) -> pd.Series:
     """
     由净值序列进行指标统计
@@ -141,7 +142,7 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     if freq not in DAYS_IN_PERIOD or freq not in FREQ_GROUPER_MAP:
         raise ValueError('average_turnover -- Not Right freq : ', freq)
     grouper_key = FREQ_GROUPER_MAP[freq]
-    position_df['sum'] = position_df.sum(axis=1)-position_df['cash']
+    position_df['sum'] = position_df.sum(axis=1) - position_df['cash']
     transaction_df = transaction_df.reset_index()
     position_df = position_df.reset_index()
     transaction_info = transaction_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
@@ -156,4 +157,27 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     merged_df = position_info.join(transaction_info)
     merged_df = merged_df[~merged_df['position_value'].isna()].copy()
     merged_df['turnover_rate'] = merged_df['total_value'] / merged_df['position_value']
-    return merged_df['turnover_rate'].mean()/DAYS_IN_PERIOD[freq]*252
+    return merged_df['turnover_rate'].mean() / DAYS_IN_PERIOD[freq] * 252
+
+
+def get_yearly(netvalue, cd_col, freq, rf=0) -> pd.DataFrame:
+    """
+    计算年化收益率
+    :param netvalue: pd.Series
+    :param freq: 收益率频率
+    :param rf: 无风险利率
+    :return:pd.Series
+    """
+    df = pd.DataFrame(netvalue.rename('npv'))
+    df['dt'] = df.index
+    df['year'] = df['dt'].apply(lambda x: str(x.year))
+    years = df['year'].unique()
+    series_yearly = pd.Series()
+    init_npv = 1
+    for y in years:
+        npv = df[df['year'] == y]['npv']
+        year_npv = npv / init_npv
+        init_npv = npv.iloc[-1]
+        r = get_netvalue_analysis(year_npv, freq=freq, rf=rf)
+        series_yearly[y] = r[cd_col]
+    return pd.DataFrame(series_yearly.rename('年化收益率'))
