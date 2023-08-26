@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 FREQ_ONEYEAR_MAP = {
     'D': 252,
@@ -26,6 +26,14 @@ DAYS_IN_PERIOD = {
     'M': 21,
     'HD': 126,
     'Y': 252
+}
+FREQ_TIME_FORMAT_REF = {
+    'D': '%Y %m %d',
+    '1D': '%Y %m %d',
+    "W": '%Y %U',
+    '1W': '%Y %U',
+    'M': '%Y-%m',
+    'Y': '%Y'
 }
 
 
@@ -172,7 +180,6 @@ def get_yearly_analysis(netvalue, freq, rf=0) -> pd.DataFrame:
     df['dt'] = df.index
     df['year'] = df['dt'].apply(lambda x: str(x.year))
     years = df['year'].unique()
-    series_yearly = pd.Series()
     ret = pd.DataFrame()
     init_npv = 1
     for y in years:
