@@ -160,7 +160,7 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     return merged_df['turnover_rate'].mean() / DAYS_IN_PERIOD[freq] * 252
 
 
-def get_yearly(netvalue, cd_col, freq, rf=0) -> pd.DataFrame:
+def get_yearly_analysis(netvalue, freq, rf=0) -> pd.DataFrame:
     """
     计算年化收益率
     :param netvalue: pd.Series
@@ -173,11 +173,12 @@ def get_yearly(netvalue, cd_col, freq, rf=0) -> pd.DataFrame:
     df['year'] = df['dt'].apply(lambda x: str(x.year))
     years = df['year'].unique()
     series_yearly = pd.Series()
+    ret = pd.DataFrame()
     init_npv = 1
     for y in years:
         npv = df[df['year'] == y]['npv']
         year_npv = npv / init_npv
         init_npv = npv.iloc[-1]
         r = get_netvalue_analysis(year_npv, freq=freq, rf=rf)
-        series_yearly[y] = r[cd_col]
-    return pd.DataFrame(series_yearly.rename('年化收益率'))
+        ret[y] = r
+    return ret
