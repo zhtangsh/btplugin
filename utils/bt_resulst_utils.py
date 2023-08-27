@@ -16,6 +16,7 @@ def build_position_value(ordered_list) -> pd.DataFrame:
         return pd.DataFrame()
     df = pd.DataFrame(res)
     df['date'] = pd.to_datetime(df['date'])
+    df['date'].dt.tz_localize(None)
     return df.set_index('date')
 
 
@@ -34,6 +35,7 @@ def build_transaction(ordered_list) -> pd.DataFrame:
         return pd.DataFrame()
     df = pd.DataFrame(res)
     df['date'] = pd.to_datetime(df['date'])
+    df['date'].dt.tz_localize(None)
     return df.set_index('date')
 
 
