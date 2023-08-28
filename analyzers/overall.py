@@ -53,11 +53,18 @@ class BktGeneraStatics(bt.Analyzer):
             'r': rets,
             'maxdrawdowns': analysis_util.get_maxdrawdown(_npv)
         })
+        p_df = p_df.reset_index()
+        cols = []
+        for c in p_df.columns:
+            if c == 'date' or c == 'sum':
+                continue
+            cols.append(c)
+        df_p_record = pd.melt(p_df, id_vars=['date'], value_vars=cols, var_name='order_book_id', value_name='position')
         df_yearly_analysis = analysis_util.get_yearly_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
         return {
             'npv': df_npv,
             'analysis': df_analysis,
             'yearly_analysis': df_yearly_analysis,
-            'position': p_df,
+            'position': df_p_record[df_p_record['position'] > 0].copy(),
             'transaction': t_df
         }
