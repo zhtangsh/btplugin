@@ -1,3 +1,5 @@
+import logging
+
 import backtrader as bt
 import pandas as pd
 from btplugin.utils import analysis_util, bt_resulst_utils
@@ -79,6 +81,9 @@ class DailyTradeStats(bt.Analyzer):
                     'pnl_change': pnl_change,
                     'pnlcomm_change': pnlcomm_change,
                 })
+            if not res_list:
+                logging.info("period_key:" + date_key.strftime(time_format) + "的交易为空")
+                continue
             df_period_pnl = pd.DataFrame(res_list).sort_values(by='pnlcomm_change', ascending=False)
             top_k_df = df_period_pnl.head(k).copy()
             bottom_k_df = df_period_pnl.tail(k).copy()
