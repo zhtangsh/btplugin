@@ -95,4 +95,8 @@ class DailyTradeStats(bt.Analyzer):
             bottom_k_list.append(bottom_k_df)
         df_top_k = pd.concat(top_k_list, axis=0)
         df_bottom_k = pd.concat(bottom_k_list, axis=0)
-        return df_top_k, df_bottom_k
+        return {
+            'df_top_k': df_top_k,
+            'df_bottom_k': df_bottom_k,
+            'df_daily_trade': df_daily_trade,
+        }
