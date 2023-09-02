@@ -40,12 +40,15 @@ def build_transaction(ordered_list) -> pd.DataFrame:
 
 
 def build_trade_history(df_in) -> pd.DataFrame:
+    df_in['unrealized_pnl'] = (df_in['close'] - df_in['price']) * df_in['size']
     groups = df_in.groupby(by=['ref'])
     res = []
     for _, group in groups:
         mask = (group['date'] == group['dtclose']) | (group['status'] == 'Open')
         group = group[mask].copy()
-        group['pnl_change'] = group['pnl'] - group['pnl'].shift(1)
-        group['pnlcomm_change'] = group['pnlcomm'] - group['pnlcomm'].shift(1)
+        group['overall_pnl'] = group['pnl'] + group['unrealized_pnl']
+        group['overall_pnlcomm'] = group['overall_pnl'] - group['commission']
+        group['overall_pnl_change'] = group['overall_pnl'] - group['overall_pnl'].shift(1)
+        group['overall_pnlcomm_change'] = group['overall_pnlcomm'] - group['overall_pnlcomm'].shift(1)
         res.append(group)
     return pd.concat(res, axis=0)

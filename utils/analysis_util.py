@@ -28,10 +28,10 @@ DAYS_IN_PERIOD = {
     'Y': 252
 }
 FREQ_TIME_FORMAT_REF = {
-    'D': '%Y %m %d',
-    '1D': '%Y %m %d',
-    "W": '%Y %U',
-    '1W': '%Y %U',
+    'D': '%Y-%m-%d',
+    '1D': '%Y-%m-%d',
+    "W": '%YW%U',
+    '1W': '%YW%U',
     'M': '%Y-%m',
     'Y': '%Y'
 }

@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 import backtrader as bt
@@ -37,6 +38,8 @@ class DailyTradeStats(bt.Analyzer):
                     'ref': trade.ref,
                     'dtopen': trade.open_datetime(),
                     'dtclose': trade.close_datetime() if trade.dtclose >= 1 else None,
+                    'open': d.open[0],
+                    'close': d.close[0],
 
                 }
                 trade_list.append(trade_info)
@@ -66,15 +69,16 @@ class DailyTradeStats(bt.Analyzer):
                 df_t = trade_group[mask]
                 if df_t.empty:
                     continue
-                pnlcomm_change_0 = df_t['pnlcomm_change'].iloc[0]
-                pnl_change_0 = df_t['pnl_change'].iloc[0]
+                pnlcomm_change_0 = df_t['overall_pnlcomm_change'].iloc[0]
+                pnl_change_0 = df_t['overall_pnl_change'].iloc[0]
                 if pd.isna(pnlcomm_change_0):
                     # 本季度首次建仓
-                    pnlcomm_change = df_t['pnlcomm'].iloc[-1]
-                    pnl_change = df_t['pnl'].iloc[-1]
+                    pnlcomm_change = df_t['overall_pnlcomm'].iloc[-1]
+                    pnl_change = df_t['overall_pnl'].iloc[-1]
                 else:
-                    pnlcomm_change = df_t['pnlcomm'].iloc[-1] - df_t['pnlcomm'].iloc[0] + pnlcomm_change_0
-                    pnl_change = df_t['pnl'].iloc[-1] - df_t['pnl'].iloc[0] + pnl_change_0
+                    pnlcomm_change = df_t['overall_pnlcomm'].iloc[-1] - df_t['overall_pnlcomm'].iloc[
+                        0] + pnlcomm_change_0
+                    pnl_change = df_t['overall_pnl'].iloc[-1] - df_t['overall_pnl'].iloc[0] + pnl_change_0
                 res_list.append({
                     'period_key ': date_key.strftime(time_format),
                     'order_book_id': df_t.iloc[0, 1],
