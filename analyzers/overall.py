@@ -65,6 +65,6 @@ class BktGeneraStatics(bt.Analyzer):
             'npv': df_npv,
             'analysis': df_analysis,
             'yearly_analysis': df_yearly_analysis,
-            'position': df_p_record[df_p_record['position'] > 0].copy(),
+            'position': df_p_record[df_p_record['position'] > 0].copy().sort_values(by='date'),
             'transaction': t_df
         }
