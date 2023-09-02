@@ -102,5 +102,5 @@ class DailyTradeStats(bt.Analyzer):
         return {
             'df_top_k': df_top_k,
             'df_bottom_k': df_bottom_k,
-            'df_daily_trade': df_daily_trade,
+            'df_daily_pnl': df_daily_trade,
         }
