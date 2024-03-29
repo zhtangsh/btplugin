@@ -18,7 +18,7 @@ class DailyTradeStats(bt.Analyzer):
     def next(self):
         trade_dict = self.strategy._trades
         trade_list = []
-        ts = self.strategy.datetime.date()
+        ts = self.strategy.datetime.datetime()
         for d in self.datas:
             if not trade_dict:
                 continue
