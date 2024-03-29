@@ -10,6 +10,7 @@ class BktGeneraStatics(bt.Analyzer):
         ('strategy_freq', 'W'),  # 策略信号频率，用于进行交易结果分析
         ('npv_freq', 'D'),  # 对应日度价格数据
         ('rf', 0.),
+        ('future_like', False)
     )
 
     def __init__(self):
@@ -45,7 +46,10 @@ class BktGeneraStatics(bt.Analyzer):
         # Transaction value
         t_df = bt_resulst_utils.build_transaction(self.rets['transactions'])
         # Turnover value
-        turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
+        if self.p.future_like:
+            turnover = analysis_util.future_average_turnover(t_df)
+        else:
+            turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
         df_analysis = analysis_util.get_netvalue_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
         df_analysis['年化换手率'] = turnover
         df_npv = pd.DataFrame({

@@ -168,6 +168,35 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     return merged_df['turnover_rate'].mean() / DAYS_IN_PERIOD[freq] * 252
 
 
+def future_average_turnover(transaction_df: pd.DataFrame, freq: str = 'Y') -> float:
+    """
+    :param transaction_df: 交易表
+    :return: 平均换手率
+    :param freq: 计算换手率的基准频率
+    计算期货平均换手率
+    基于交易数据，计算平均换手率
+    1. 按年分组
+    2. 每年内计算平均市值
+    3. 每年内计算总成交额
+    2. 成交量/平均市值得日度换手率
+    3. 计算平均换手率
+    """
+    if freq not in DAYS_IN_PERIOD or freq not in FREQ_GROUPER_MAP:
+        raise ValueError('average_turnover -- Not Right freq : ', freq)
+    grouper_key = FREQ_GROUPER_MAP[freq]
+    transaction_df = transaction_df.reset_index()
+    transaction_df['holding_number'] = transaction_df['amount'].cumsum()
+    transaction_df['holding_amount'] = abs(transaction_df['holding_number']*transaction_df['price'])
+    transaction_groups = transaction_df.groupby(pd.Grouper(key='date', freq=grouper_key))
+    total_turnover_list = []
+    for _,group in transaction_groups:
+        n,_ = group.shape
+        holding_amount_average = group['holding_amount'].mean()
+        holding_amount_sum = abs(group['amount']).sum()
+        total_turnover = holding_amount_sum/holding_amount_average/n*252
+        total_turnover_list.append(total_turnover)
+    return np.array(total_turnover_list).mean()
+
 def get_yearly_analysis(netvalue, freq, rf=0) -> pd.DataFrame:
     """
     计算年化收益率
