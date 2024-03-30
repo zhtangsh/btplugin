@@ -185,15 +185,15 @@ def future_average_turnover(transaction_df: pd.DataFrame, freq: str = 'Y') -> fl
         raise ValueError('average_turnover -- Not Right freq : ', freq)
     grouper_key = FREQ_GROUPER_MAP[freq]
     transaction_df = transaction_df.reset_index()
-    transaction_df['holding_number'] = transaction_df['amount'].cumsum()
-    transaction_df['holding_amount'] = abs(transaction_df['holding_number']*transaction_df['price'])
+    transaction_df['holding_amount'] = transaction_df['amount'].cumsum()
+    transaction_df['holding_value'] = abs(transaction_df['holding_amount']*transaction_df['price'])
     transaction_groups = transaction_df.groupby(pd.Grouper(key='date', freq=grouper_key))
     total_turnover_list = []
     for _,group in transaction_groups:
         n,_ = group.shape
-        holding_amount_average = group['holding_amount'].mean()
-        holding_amount_sum = abs(group['amount']).sum()
-        total_turnover = holding_amount_sum/holding_amount_average/n*252
+        holding_value_average = group['holding_value'].mean()
+        trading_value_sum = abs(group['value']).sum()
+        total_turnover = trading_value_sum/holding_value_average/n*252
         total_turnover_list.append(total_turnover)
     return np.array(total_turnover_list).mean()
 
