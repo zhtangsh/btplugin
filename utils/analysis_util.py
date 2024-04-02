@@ -168,7 +168,7 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     return merged_df['turnover_rate'].mean() / DAYS_IN_PERIOD[freq] * 252
 
 
-def future_average_turnover(transaction_df: pd.DataFrame, freq: str = 'Y') -> float:
+def future_average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, freq: str = 'Y') -> float:
     """
     :param transaction_df: 交易表
     :return: 平均换手率
@@ -178,24 +178,32 @@ def future_average_turnover(transaction_df: pd.DataFrame, freq: str = 'Y') -> fl
     1. 按年分组
     2. 每年内计算平均市值
     3. 每年内计算总成交额
-    2. 成交量/平均市值得日度换手率
+    2. 成交金量/平均市值得日度换手率
     3. 计算平均换手率
     """
     if freq not in DAYS_IN_PERIOD or freq not in FREQ_GROUPER_MAP:
         raise ValueError('average_turnover -- Not Right freq : ', freq)
     grouper_key = FREQ_GROUPER_MAP[freq]
+    column_mask = [c for c in position_df.columns if 'no_mult' in c]
+    position_df = position_df[column_mask].copy()
+    position_df['sum'] = position_df.apply(lambda x: x.abs().sum(), axis=1)
+    position_df = position_df.reset_index()
     transaction_df = transaction_df.reset_index()
-    transaction_df['holding_amount'] = transaction_df['amount'].cumsum()
-    transaction_df['holding_value'] = abs(transaction_df['holding_amount']*transaction_df['price'])
-    transaction_groups = transaction_df.groupby(pd.Grouper(key='date', freq=grouper_key))
-    total_turnover_list = []
-    for _,group in transaction_groups:
-        n,_ = group.shape
-        holding_value_average = group['holding_value'].mean()
-        trading_value_sum = abs(group['value']).sum()
-        total_turnover = trading_value_sum/holding_value_average/n*252
-        total_turnover_list.append(total_turnover)
-    return np.array(total_turnover_list).mean()
+    transaction_info = transaction_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
+        total_value=pd.NamedAgg(column='value', aggfunc=lambda x: x.abs().sum()),
+    )
+    position_info = position_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
+        mean_position_value=pd.NamedAgg(column='sum', aggfunc='mean'),
+        total_days=pd.NamedAgg(column='sum', aggfunc='nunique'),
+        start_date=pd.NamedAgg(column='date', aggfunc='min'),
+        end_date=pd.NamedAgg(column='date', aggfunc='max'),
+    )
+    merged_df = position_info.join(transaction_info)
+    merged_df = merged_df[~merged_df['mean_position_value'].isna()].copy()
+    merged_df['turnover_rate'] = merged_df['total_value'] / merged_df['mean_position_value'] \
+                                 / merged_df['total_days'] * 252
+    return merged_df['turnover_rate'].mean()
+
 
 def get_yearly_analysis(netvalue, freq, rf=0) -> pd.DataFrame:
     """

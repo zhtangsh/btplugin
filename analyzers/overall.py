@@ -3,6 +3,31 @@ import pandas as pd
 from ..utils import analysis_util, bt_resulst_utils
 
 
+class MarcketDataAnalyzer(bt.Analyzer):
+    """
+    收集data的close value，用于计算当日市值
+    """
+    params = (
+        ('headers', False),
+    )
+
+    def start(self):
+        if self.p.headers:
+            headers = [d._name or 'Data%d' % i
+                       for i, d in enumerate(self.datas)]
+            self.rets['Datetime'] = headers
+
+        tf = min(d._timeframe for d in self.datas)
+        self._usedate = tf >= bt.TimeFrame.Days
+
+    def next(self):
+        pvals = [d.close[0] for d in self.datas]
+        if self._usedate:
+            self.rets[self.strategy.datetime.date()] = pvals
+        else:
+            self.rets[self.strategy.datetime.datetime()] = pvals
+
+
 class BktGeneraStatics(bt.Analyzer):
     params = (
         ('timeframe', bt.TimeFrame.Days),
@@ -10,7 +35,8 @@ class BktGeneraStatics(bt.Analyzer):
         ('strategy_freq', 'W'),  # 策略信号频率，用于进行交易结果分析
         ('npv_freq', 'D'),  # 对应日度价格数据
         ('rf', 0.),
-        ('future_like', False)
+        ('future_like', False),
+        ('mult_dict', {})
     )
 
     def __init__(self):
@@ -18,6 +44,8 @@ class BktGeneraStatics(bt.Analyzer):
                         compression=self.p.compression)
         self._returns = bt.analyzers.TimeReturn(**tr_param)
         self._positions = bt.analyzers.PositionsValue(headers=True, cash=True)
+        if self.p.future_like:
+            self._marcket_data = MarcketDataAnalyzer(headers=True)
         self._transactions = bt.analyzers.Transactions(headers=True)
 
     def stop(self):
@@ -25,6 +53,8 @@ class BktGeneraStatics(bt.Analyzer):
         self.rets['returns'] = self._returns.get_analysis()
         self.rets['positions'] = self._positions.get_analysis()
         self.rets['transactions'] = self._transactions.get_analysis()
+        if self.p.future_like:
+            self.rets['marcket_data'] = self._marcket_data.get_analysis()
 
     def result(self):
         """
@@ -47,7 +77,9 @@ class BktGeneraStatics(bt.Analyzer):
         t_df = bt_resulst_utils.build_transaction(self.rets['transactions'])
         # Turnover value
         if self.p.future_like:
-            turnover = analysis_util.future_average_turnover(t_df)
+            df_macket_data = bt_resulst_utils.build_market_data(self.rets['marcket_data'])
+            p_df = bt_resulst_utils.patch_future_position(p_df, t_df, df_macket_data, self.p.mult_dict)
+            turnover = analysis_util.future_average_turnover(p_df, t_df)
         else:
             turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
         df_analysis = analysis_util.get_netvalue_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
@@ -63,7 +95,8 @@ class BktGeneraStatics(bt.Analyzer):
             if c == 'date' or c == 'sum':
                 continue
             cols.append(c)
-        df_p_record = pd.melt(p_df, id_vars=['date'], value_vars=cols, var_name='order_book_id', value_name='position')
+        df_p_record = pd.melt(p_df, id_vars=['date'], value_vars=cols, var_name='order_book_id',
+                              value_name='position').dropna(how="any")
         df_yearly_analysis = analysis_util.get_yearly_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)
         return {
             'npv': df_npv,
