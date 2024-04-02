@@ -79,7 +79,7 @@ class BktGeneraStatics(bt.Analyzer):
         if self.p.future_like:
             df_macket_data = bt_resulst_utils.build_market_data(self.rets['marcket_data'])
             p_df = bt_resulst_utils.patch_future_position(p_df, t_df, df_macket_data, self.p.mult_dict)
-            turnover = analysis_util.future_average_turnover(p_df, t_df)
+            turnover = analysis_util.future_average_turnover(p_df, t_df, mult_dict=self.p.mult_dict)
         else:
             turnover = analysis_util.average_turnover(p_df, t_df, self.p.strategy_freq)
         df_analysis = analysis_util.get_netvalue_analysis(_npv, freq=self.p.npv_freq, rf=self.p.rf)

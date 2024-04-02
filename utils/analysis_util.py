@@ -168,7 +168,12 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     return merged_df['turnover_rate'].mean() / DAYS_IN_PERIOD[freq] * 252
 
 
-def future_average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, freq: str = 'Y') -> float:
+def future_average_turnover(
+        position_df: pd.DataFrame,
+        transaction_df: pd.DataFrame,
+        freq: str = 'Y',
+        mult_dict={}
+) -> float:
     """
     :param transaction_df: 交易表
     :return: 平均换手率
@@ -184,13 +189,14 @@ def future_average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFr
     if freq not in DAYS_IN_PERIOD or freq not in FREQ_GROUPER_MAP:
         raise ValueError('average_turnover -- Not Right freq : ', freq)
     grouper_key = FREQ_GROUPER_MAP[freq]
-    column_mask = [c for c in position_df.columns if 'no_mult' in c]
+    column_mask = [c for c in position_df.columns if 'market_value' in c]
     position_df = position_df[column_mask].copy()
     position_df['sum'] = position_df.apply(lambda x: x.abs().sum(), axis=1)
+    transaction_df['value_with_mult'] = transaction_df.apply(lambda x: x['value'] * mult_dict.get(x['symbol'], 1.), axis=1)
     position_df = position_df.reset_index()
     transaction_df = transaction_df.reset_index()
     transaction_info = transaction_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
-        total_value=pd.NamedAgg(column='value', aggfunc=lambda x: x.abs().sum()),
+        total_value=pd.NamedAgg(column='value_with_mult', aggfunc=lambda x: x.abs().sum()),
     )
     position_info = position_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
         mean_position_value=pd.NamedAgg(column='sum', aggfunc='mean'),
