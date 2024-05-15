@@ -13,12 +13,13 @@ class DailyTradeStats(bt.Analyzer):
     )
 
     def start(self):
-        self.rets['data'] = []
+        self.rets['data'] = {}
 
     def next(self):
         trade_dict = self.strategy._trades
         trade_list = []
         ts = self.strategy.datetime.datetime()
+        t_date = ts.date()
         for d in self.datas:
             if not trade_dict:
                 continue
@@ -43,14 +44,18 @@ class DailyTradeStats(bt.Analyzer):
 
                 }
                 trade_list.append(trade_info)
-        self.rets['data'].extend(trade_list)
+        self.rets['data'][t_date] = trade_list
+        # self.rets['data'].extend(trade_list)
 
     def result(self):
         """
         获得收益贡献统计
         :return: df_top_k, df_bottom_k
         """
-        df_daily_trade = pd.DataFrame(self.rets['data'])
+        self.rets['data_list'] = []
+        for _,v in self.rets['data'].values():
+            self.rets['data_list'].extend(v)
+        df_daily_trade = pd.DataFrame(self.rets['data_list'])
         df_daily_trade = bt_resulst_utils.build_trade_history(df_daily_trade)
         if self.p.contribution_freq not in analysis_util.FREQ_GROUPER_MAP:
             raise ValueError(f"DailyTradeStats - Invalid contribution_freq:{self.p.contribution_freq}")
