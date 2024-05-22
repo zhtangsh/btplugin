@@ -192,6 +192,7 @@ def future_average_turnover(
     column_mask = [c for c in position_df.columns if 'market_value' in c]
     position_df = position_df[column_mask].copy()
     position_df['sum'] = position_df.apply(lambda x: x.abs().sum(), axis=1)
+    position_df['sum'] = position_df['sum'].replace(0.0, np.nan)
     transaction_df['value_with_mult'] = transaction_df.apply(lambda x: x['value'] * mult_dict.get(x['symbol'], 1.), axis=1)
     position_df = position_df.reset_index()
     transaction_df = transaction_df.reset_index()
