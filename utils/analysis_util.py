@@ -194,12 +194,18 @@ def future_average_turnover(
     position_df['sum'] = position_df.apply(lambda x: x.abs().sum(), axis=1)
     position_df['sum'] = position_df['sum'].replace(0.0, np.nan)
     transaction_df['value_with_mult'] = transaction_df.apply(lambda x: x['value'] * mult_dict.get(x['symbol'], 1.), axis=1)
-    position_df = position_df.reset_index()
-    transaction_df = transaction_df.reset_index()
-    transaction_info = transaction_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
+    # 交易按日做sum，持仓按日做平均
+    position_df = position_df.groupby(pd.Grouper(freq='D'))[['sum']].mean()
+    transaction_df = transaction_df.groupby(pd.Grouper(freq='D')).agg(
         total_value=pd.NamedAgg(column='value_with_mult', aggfunc=lambda x: x.abs().sum()),
     )
-    position_info = position_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
+    # 按年计算平均换手率
+    position_df = position_df.reset_index()
+    transaction_df = transaction_df.reset_index()
+    transaction_info = transaction_df.groupby(pd.Grouper(key='date',freq=grouper_key)).agg(
+        total_value=pd.NamedAgg(column='total_value', aggfunc=lambda x: x.abs().sum()),
+    )
+    position_info = position_df.groupby(pd.Grouper(key='date',freq=grouper_key)).agg(
         mean_position_value=pd.NamedAgg(column='sum', aggfunc='mean'),
         total_days=pd.NamedAgg(column='sum', aggfunc='nunique'),
         start_date=pd.NamedAgg(column='date', aggfunc='min'),
