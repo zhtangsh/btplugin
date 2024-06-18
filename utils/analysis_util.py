@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import datetime
 
 FREQ_ONEYEAR_MAP = {
     'D': 252,
@@ -158,7 +159,7 @@ def average_turnover(position_df: pd.DataFrame, transaction_df: pd.DataFrame, fr
     )
     position_info = position_df.groupby(pd.Grouper(key='date', freq=grouper_key)).agg(
         position_value=pd.NamedAgg(column='sum', aggfunc='last'),
-        total_days=pd.NamedAgg(column='sum', aggfunc='nunique'),
+        total_days=pd.NamedAgg(column='date', aggfunc='nunique'),
         start_date=pd.NamedAgg(column='date', aggfunc='min'),
         end_date=pd.NamedAgg(column='date', aggfunc='max'),
     )
@@ -199,6 +200,7 @@ def future_average_turnover(
     transaction_df = transaction_df.groupby(pd.Grouper(freq='D')).agg(
         total_value=pd.NamedAgg(column='value_with_mult', aggfunc=lambda x: x.abs().sum()),
     )
+
     # 按年计算平均换手率
     position_df = position_df.reset_index()
     transaction_df = transaction_df.reset_index()
@@ -207,7 +209,7 @@ def future_average_turnover(
     )
     position_info = position_df.groupby(pd.Grouper(key='date',freq=grouper_key)).agg(
         mean_position_value=pd.NamedAgg(column='sum', aggfunc='mean'),
-        total_days=pd.NamedAgg(column='sum', aggfunc='nunique'),
+        total_days=pd.NamedAgg(column='date', aggfunc='nunique'),
         start_date=pd.NamedAgg(column='date', aggfunc='min'),
         end_date=pd.NamedAgg(column='date', aggfunc='max'),
     )
