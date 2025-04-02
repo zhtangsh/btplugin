@@ -216,7 +216,7 @@ def future_average_turnover(
     merged_df = position_info.join(transaction_info)
     merged_df = merged_df[~merged_df['mean_position_value'].isna()].copy()
     merged_df['turnover_rate'] = merged_df['total_value'] / merged_df['mean_position_value'] \
-                                 / merged_df['total_days'] * 252
+                                 / merged_df['total_days'] * 365
     return merged_df['turnover_rate'].mean()
 
 
