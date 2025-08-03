@@ -196,10 +196,11 @@ def future_average_turnover(
     position_df['sum'] = position_df['sum'].replace(0.0, np.nan)
     transaction_df['value_with_mult'] = transaction_df.apply(lambda x: x['value'] * mult_dict.get(x['symbol'], 1.), axis=1)
     # 交易按日做sum，持仓按日做平均
-    position_df = position_df.groupby(pd.Grouper(freq='D'))[['sum']].mean()
+    position_df = position_df.groupby(pd.Grouper(freq='D'))[['sum']].mean().dropna()
     transaction_df = transaction_df.groupby(pd.Grouper(freq='D')).agg(
         total_value=pd.NamedAgg(column='value_with_mult', aggfunc=lambda x: x.abs().sum()),
-    )
+    ).reindex(index=position_df.index)
+
 
     # 按年计算平均换手率
     position_df = position_df.reset_index()
@@ -208,7 +209,7 @@ def future_average_turnover(
         total_value=pd.NamedAgg(column='total_value', aggfunc=lambda x: x.abs().sum()),
     )
     position_info = position_df.groupby(pd.Grouper(key='date',freq=grouper_key)).agg(
-        mean_position_value=pd.NamedAgg(column='sum', aggfunc='mean'),
+        mean_position_value=pd.NamedAgg(column='sum', aggfunc='first'),
         total_days=pd.NamedAgg(column='date', aggfunc='nunique'),
         start_date=pd.NamedAgg(column='date', aggfunc='min'),
         end_date=pd.NamedAgg(column='date', aggfunc='max'),
@@ -216,7 +217,7 @@ def future_average_turnover(
     merged_df = position_info.join(transaction_info)
     merged_df = merged_df[~merged_df['mean_position_value'].isna()].copy()
     merged_df['turnover_rate'] = merged_df['total_value'] / merged_df['mean_position_value'] \
-                                 / merged_df['total_days'] * 365
+                                 / merged_df['total_days'] * 250
     return merged_df['turnover_rate'].mean()
 
 
